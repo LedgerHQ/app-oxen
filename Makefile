@@ -1,180 +1,99 @@
-#*******************************************************************************
-#   Ledger Nano S
-#   (c) 2016 Ledger
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-#*******************************************************************************
+.PHONY: all
 
-TARGET_NAME := TARGET_NANOX
-
--include Makefile.env
 ifeq ($(BOLOS_SDK),)
 $(error Environment variable BOLOS_SDK is not set)
 endif
+
 include $(BOLOS_SDK)/Makefile.defines
 
-#Monero /44'/128'
-APP_LOAD_PARAMS=  --path "2147483692/2147483776" --curve secp256k1 $(COMMON_LOAD_PARAMS) --appFlags 0x240
-APPNAME = "Monero"
-
-ifeq ($(TARGET_NAME),TARGET_BLUE)
-ICONNAME = images/icon_monero_blue.gif
-else ifeq ($(TARGET_NAME),TARGET_NANOX)
-ICONNAME = images/icon_monero_nanox.gif
+ifeq ($(TARGET_NAME),TARGET_NANOS)
+    SCRIPT_LD := script.ld
+    ifneq ($(SYSROOT),)
+    else ifneq ("","$(wildcard /usr/lib/arm-none-eabi)")
+        override SYSROOT := /usr/lib/arm-none-eabi
+    endif
+    $(info SYSROOT=$(SYSROOT))
 else
-ICONNAME = images/icon_monero.gif
+    # Work around buggy Makefile.defines not setting this:
+    AFLAGS += --target=armv6m-none-eabi
 endif
 
-APPVERSION_M=1
-APPVERSION_N=4
-APPVERSION_P=0
-
-APPVERSION=$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
-SPECVERSION="alpha"
-
-DEFINES   += $(MONERO_CONFIG)
-DEFINES   += MONERO_VERSION_MAJOR=$(APPVERSION_M) MONERO_VERSION_MINOR=$(APPVERSION_N) MONERO_VERSION_MICRO=$(APPVERSION_P)
-DEFINES   += MONERO_VERSION=$(APPVERSION)
-DEFINES   += MONERO_NAME=$(APPNAME)
-DEFINES   += SPEC_VERSION=$(SPECVERSION)
-
-ifeq ($(TARGET_NAME),TARGET_NANOX)
-DEFINES   += UI_NANO_X
-else ifeq ($(TARGET_NAME),TARGET_BLUE)
-DEFINES   += UI_BLUE
+ifeq ($(TARGET_NAME),TARGET_NANOS)
+    ICONNAME = glyphs/nanos_app_oxen.gif
 else
-DEFINES   += UI_NANO_S
+    ICONNAME = glyphs/nanox_app_oxen.gif
 endif
 
-
-#DEFINES += IOCRYPT
-## Debug options
-#DEFINES   += DEBUG_HWDEVICE
-#DEFINES   += IODUMMYCRYPT
-#DEFINES   += IONOCRYPT
-
-################
-# Default rule #
-################
+include Makefile.oxen
 
 all: default
 
-############
-# Platform #
-############
-
-ifneq ($(NO_CONSENT),)
-DEFINES   += NO_CONSENT
-endif
-
-DEFINES   += OS_IO_SEPROXYHAL
-DEFINES   += HAVE_BAGL HAVE_SPRINTF
-DEFINES   += HAVE_IO_USB HAVE_L4_USBLIB IO_USB_MAX_ENDPOINTS=6 IO_HID_EP_LENGTH=64 HAVE_USB_APDU
-DEFINES   += CUSTOM_IO_APDU_BUFFER_SIZE=\(255+5+64\)
-
-DEFINES   += USB_SEGMENT_SIZE=64
-DEFINES   += U2F_PROXY_MAGIC=\"MOON\"
-DEFINES   += HAVE_IO_U2F HAVE_U2F
-
-DEFINES   += UNUSED\(x\)=\(void\)x
-DEFINES   += APPVERSION=\"$(APPVERSION)\"
-
 ifeq ($(TARGET_NAME),TARGET_NANOX)
-# DEFINES       += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000
-# DEFINES       += HAVE_BLE_APDU # basic ledger apdu transport over BLE
+    DEFINES += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000 HAVE_BLE_APDU
+endif
 
-DEFINES		  += IO_SEPROXYHAL_BUFFER_SIZE_B=300
-DEFINES       += HAVE_GLO096
-DEFINES       += HAVE_BAGL BAGL_WIDTH=128 BAGL_HEIGHT=64
-DEFINES       += HAVE_BAGL_ELLIPSIS # long label truncation feature
-DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
-DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
-DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
-DEFINES		  += HAVE_UX_FLOW
+ifeq ($(TARGET_NAME),TARGET_NANOS)
+    DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=128
 else
-DEFINES		  += IO_SEPROXYHAL_BUFFER_SIZE_B=128
+    DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=300
+    DEFINES += BAGL_WIDTH=128 BAGL_HEIGHT=64
+    DEFINES += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
+    DEFINES += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
+    DEFINES += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
+    DEFINES += UNUSED\(x\)=\(void\)x
 endif
 
-
-# Enabling debug PRINTF
-DEBUG = 0
-ifneq ($(DEBUG),0)
-
-        ifeq ($(TARGET_NAME),TARGET_NANOX)
-                DEFINES   += HAVE_PRINTF PRINTF=mcu_usb_printf
-        else
-                DEFINES   += HAVE_PRINTF PRINTF=screen_printf
-        endif
+CC := $(CLANGPATH)clang
+ifeq ($(TARGET_NAME),TARGET_NANOS)
+    AS := $(GCCPATH)arm-none-eabi-gcc
+    LD := $(GCCPATH)arm-none-eabi-gcc
 else
-        DEFINES   += PRINTF\(...\)=
+    AS := $(CC)
+    LD := $(CC)
 endif
-
-
-##############
-# Compiler #
-##############
-ifneq ($(BOLOS_ENV),)
-$(info BOLOS_ENV=$(BOLOS_ENV))
-CLANGPATH := $(BOLOS_ENV)/clang-arm-fropi/bin/
-GCCPATH := $(BOLOS_ENV)/gcc-arm-none-eabi-5_3-2016q1/bin/
-else
-$(info BOLOS_ENV is not set: falling back to CLANGPATH and GCCPATH)
-endif
-ifeq ($(CLANGPATH),)
-$(info CLANGPATH is not set: clang will be used from PATH)
-endif
-ifeq ($(GCCPATH),)
-$(info GCCPATH is not set: arm-none-eabi-* will be used from PATH)
-endif
-CC       := $(CLANGPATH)clang
-
-#CFLAGS   += -O0 -gdwarf-2  -gstrict-dwarf
-CFLAGS   += -O3 -Os
-#CFLAGS   += -fno-jump-tables -fno-lookup-tables -fsave-optimization-record
-#$(info $(CFLAGS))
-
-AS     := $(GCCPATH)arm-none-eabi-gcc
-
-LD       := $(GCCPATH)arm-none-eabi-gcc
-#SCRIPT_LD:=script.ld
-
-#LDFLAGS  += -O0 -gdwarf-2  -gstrict-dwarf
-LDFLAGS  += -O3 -Os
-LDLIBS   += -lm -lgcc -lc
-
-# import rules to compile glyphs(/pone)
-include $(BOLOS_SDK)/Makefile.glyphs
-
-### variables processed by the common makefile.rules of the SDK to grab source files and include dirs
-APP_SOURCE_PATH  += src
-SDK_SOURCE_PATH  += lib_stusb lib_stusb_impl lib_u2f
-
-ifeq ($(TARGET_NAME),TARGET_NANOX)
-SDK_SOURCE_PATH  += lib_ux
-endif
-
-load: all
-	python -m ledgerblue.loadApp $(APP_LOAD_PARAMS)
-
-delete:
-	python -m ledgerblue.deleteApp $(COMMON_DELETE_PARAMS)
+CFLAGS += -Oz -I$(shell pwd)/src
+LDFLAGS += -Oz
+LDLIBS  += -lgcc -lc
 
 # import generic rules from the user and SDK
 -include Makefile.rules
+
+# import rules to compile glyphs(/pone)
+GLYPH_SRC_DIR=src
+include $(BOLOS_SDK)/Makefile.glyphs
+
+### variables processed by the common makefile.rules of the SDK to grab source files and include dirs
+APP_SOURCE_PATH += src
+SDK_SOURCE_PATH += lib_stusb lib_stusb_impl lib_ux lib_u2f
+ifeq ($(TARGET_NAME),TARGET_NANOX)
+    SDK_SOURCE_PATH += lib_blewbxx lib_blewbxx_impl
+endif
+
+load: all
+	python3 -m ledgerblue.loadApp $(APP_LOAD_PARAMS)
+
+load-offline: all
+	python3 -m ledgerblue.loadApp $(APP_LOAD_PARAMS) --offline
+
+delete:
+	python3 -m ledgerblue.deleteApp $(COMMON_DELETE_PARAMS)
+
 include $(BOLOS_SDK)/Makefile.rules
 
-#add dependency on custom makefile filename
 dep/%.d: %.c Makefile
 
 listvariants:
-	@echo VARIANTS COIN monero
+	@echo VARIANTS COIN oxen
+
+
+ifeq ($(TARGET_NAME),TARGET_NANOS)
+# Rewrite the bolos sdk script to increase the stack size slightly
+script.ld: $(BOLOS_SDK)/script.ld Makefile
+	sed -e 's/^STACK_SIZE\s*=\s*[0-9]\+;/STACK_SIZE = 712;/' $< >$@
+endif
+
+docker-build:
+	sudo docker build -t ledger-app-builder:latest .
+
+docker-start:
+	sudo docker run --rm -ti -v "$(realpath .):/app" ledger-app-builder:latest

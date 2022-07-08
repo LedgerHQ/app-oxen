@@ -1,110 +1,156 @@
-# ledger-app-monero
+# Oxen Ledger App
 
+Oxen wallet application for Ledger Nano S and Nano X.
 
-Monero wallet application for Ledger Blue and Nano S
+Unlike Ledger apps such as Bitcoin, the Oxen wallet requires considerably more data storage for
+transactions and, as such, cannot be stored on the Ledger device itself because of its limited
+storage.  Instead the Oxen Ledger app works in conjunction with an Oxen wallet by offloading all
+encryption to the Ledger.  This allows keeping all wallet keys on the Ledger itself, thus ensuring
+that your wallet data files are useless without also having the Ledger device.
 
-# Install from sources
+## Installation via Ledger Manager
 
-In order to install from sources for testing purpose you need to uncomment the two following lines in Makefile
+Unfortunately, the only way to securely use the Ledger wallet with Oxen is by installing it through
+the Ledger Manager.  While it *is* possible to load a self-compiled version of the wallet app, it
+cannot properly encrypt values that are sent to the companion app (i.e. the Oxen Wallet) because
+Ledger refuses to allow on-device encryption for externally compiled applications (c.f.
+https://github.com/LedgerHQ/app-monero/issues/53).
 
-    DEFINES   += DEBUG_HWDEVICE
-    DEFINES   += IODUMMYCRYPT
+Compiling it yourself thus requires that you build both the ledger oxen app and the oxen wallet in
+debug mode: for the ledger app by using `make DEBUG=1`, and for the oxen wallet by invoke cmake with
+the `-DHWDEVICE_DEBUG=ON` option.  Be aware that this mode should only be used for testing and
+should be considered insecure as programs (such as the Oxen wallet) running on the host system are
+able to access some unencrypted private keys.
 
-Note this is only for testing. For production usage, use the application provided by the Live Manager.
+## Prerequisites
 
-# Revision
+### Device Firmware
 
-## V1.3.1
+For a Nano S, we also require that the device is running firmware version 1.6 (or newer).  For a
+Nano X there is no hard version requirement, but be advised that we will generally only explicitly
+support the latest firmware version.
 
-Add Tx proof support Monero post 0.14.0.2
+### Compilers
 
-## V1.3.0
+Building this requires a reasonably recent linux distribution; the instructions below should work on
+Debian 10+ or Ubuntu 20.04+.  (Some additional instructions below for making it work on other
+systems).
 
-Targeted Client: Monero post 0.14.0.2
+The build requires clang and arm cross-compiling tools and headers.  On recent Debian/Ubuntu:
 
-## V1.2.2
+    sudo apt install clang gcc-arm-none-eabi libnewlib-arm-none-eabi
 
-Targeted Client: Monero 0.14.0.2
+> Note that this must install clang 7 or higher, and that clang-10 and higher appear to segfault
+> with the Ledger SDK code.  See also [Getting
+> Started](https://ledger.readthedocs.io/en/latest/userspace/getting_started.html) from the Ledger
+> documentation.
 
-Partial bug Fixes in change destination address computation: Only one destination
-is allowed in transfer command
+### Python libs
 
-## v1.2.0
+You'll also need some Python libraries: pil to convert the icons into embedded source code, and
+ledgerblue for dealing with some Ledger-specific code and device interaction.  You can install with:
 
-Targeted Client: Monero 0.14.0.0+
+    sudo apt install python3-pil python3-hid python3-protobuf python3-pycryptodome python3-future python3-pip 
+    pip3 install ledgerblue
 
-- V11 fork integration
-- Fix change address issue.
+(The first line installs some of the dependencies already available in Debian/Ubuntu repositories;
+the second line will install ledgerblue plus some other unpackaged Python dependencies).
 
-## v1.1.3
+Note that actual device loading may require some additional one-time setup: see
+[ledgerblue](https://pypi.org/project/ledgerblue/) for details.  Generally this one-time setup seems
+to be the same as that required by Ledger Live, so if you have that working on the Linux system you
+are probably already set up.
 
-- Remove rolling address display
-- Allow STEALTH instruction outside TX
-- Doc fix
+To test that things are working, plug in your Ledger, enter your PIN, and then run one of the
+following from a terminal:
 
-## v1.1.2
+    # Nano S:
+    python -m ledgerblue.checkGenuineRemote --targetId 0x31100004
+    # Nano X:
+    python -m ledgerblue.checkGenuineRemote --targetId 0x33000004
 
-Fix stack overflow for 1.5.5 SDK
+Your Ledger will prompt you to "Allow Ledger Manager" to allow the request; when you accept you
+should see (back in the terminal):
 
-## v1.1.1
+    Product is genuine
 
-Allow transaction parsing when screen is locked
+If you get an error instead then check the above ledgerblue link for details on getting the Python
+module properly set up.
 
-## v1.1.0
+### Ledger Nano S and Nano X SDKs
 
-Initial Release
+The Ledger Nano S/X SDKs are included in this repository as submodules; make sure you have it cloned
+and updated using:
 
-Targeted Client: Monero 0.13.0.0+
+    git submodule update --init --recursive
 
-- Security fix: Screen lock management
-- Optimisation: New protocol V2 for future
-- Fix bug in large amount display that was truncated
-- Remove confirmation for zero amount (fake sweep change)
-- Better handling for change address to not display them
-- Dual id (PIN based) management
-- Add onscreen seed words display
+If you don't want to use the submodule for some reason, you can download the SDK somewhat and set
+the `BOLOS_SDK` environment variable to the path to the SDK:
 
+    export BOLOS_SDK=/path/to/extracted/sdk
 
-## v1.0.0
+## Compilation
 
-Initial Release
+Compile the code using:
 
-Targeted Client: Monero 0.13.0.0+
+    make -j8 all
 
+which will build both nanox and nanos binaries.  If you only want one or the other:
 
-## v 0.12.4 / Beta 5
+    make -j8 nanos
+    make -j8 nanox
 
-Targeted Client: Monero 0.12.1
+It may also be necessary to tell the build about your clang path using something like:
 
-- U2F support
-- Fix Windows detection problem
-- activate Mainnet 'Beta stage: USE AT YOUR OWN RISK'
+    make CLANGPATH=/usr/lib/llvm-9/bin/ -j8 all
 
-## v 0.12.3 / Beta 4
+especially if the `clang` binary in your path isn't the version you want.  (Alternatively you can
+fiddle with your path to appease the fairly fragile Ledger SDK Makefiles).
 
-Targeted Client: Monero 0.12.1
+## Compilation with docker
 
-- SDK 1.4.2.1 port
+Build the image with
+```
+sudo docker build -t ledger-app-builder:latest .
+```
 
-## v 0.12.2 / Beta 3
+Compile the app in the container with
+```
+sudo docker run --rm -ti -v "$(realpath .):/app" ledger-app-builder:latest
 
-Targeted Client: Monero 0.12.1
+make CLANGPATH=/usr/lib/llvm-12/bin/ DEBUG=1 clean nanos
+make CLANGPATH=/usr/lib/llvm-12/bin/ DEBUG=1 clean nanox
+```
 
-- Activate security command chain control
+Then the binary will be available in the host system under `nanos/bin` or `nanox/bin`
 
+## Loading the app onto your Ledger Nano S
 
-## v 0.12.1 / Beta 2
+Assuming the compilation above finished without error, you can now install onto your Ledger.  Note
+that installing this way is obviously not signed by Ledger, and so will be considered "not
+genuine".  It still works, but presents a nag screen when you start it.
 
-Targeted Client: Monero 0.12.1
+(This is unlike the Nano X, which cannot have sideloaded apps at all).
 
-- Add second PIN support
-- Remove key storage  in NVRAM, always recompute secret key at boot
-- Export secret viewkey, with agreement of user, to speed up tx scan
-- Clean-up RAM usage
-- Change some naming according to Monero client convention
+First make sure your Nano S is unlocked and at the main menu (where apps are listed).  Now run:
 
-## Beta 1
+    make load_nanos
 
-Targeted Client: Monero 0.12.0
+The Ledger will prompt you about this "unsafe manager" trying to load an app, since this is not an
+officially Ledger-signed app or manager.  Select "Allow" and let it continue.
 
-- Initial Beta.
+If you already have the Oxen app installed, you'll first be prompted to remove the existing one;
+select "Perform deletion" to continue.  (This will not affect your funds).
+
+Next you'll be prompted to "Install app Oxen".  Choose "Perform installation", and then enter your
+code.  Once this completes you have the custom built Oxen wallet app installed!
+
+To remove the app from your Ledger:
+
+    make delete_nanos
+
+## Useful links
+
+* Oxen client CLI - https://github.com/oxen-io/oxen-core/releases
+
+* Ledger's developer documentation - [https://ledger.readthedocs.io](https://ledger.readthedocs.io)
