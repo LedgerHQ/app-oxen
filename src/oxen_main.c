@@ -178,9 +178,11 @@ __attribute__((section(".boot"))) int main(void) {
     // exit critical section
     __asm volatile("cpsie i");
     unsigned int cont = 1;
+    // not sure if that works before
 
-    // ensure exception will work as planned
+    // ensure exception will work as planned io_seproxyhal_init
     os_boot();
+
     while (cont) {
         UX_INIT();
 

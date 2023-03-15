@@ -55,10 +55,15 @@ void monero_init(void) {
 
     // load key
     monero_init_private_key();
+
     // ux conf
     monero_init_ux();
+
     // Let's go!
     G_oxen_state.state = STATE_IDLE;
+
+    // I guess we currently crash before being here on the nanoX so there is no point if going
+    // further for now
 }
 
 /* ----------------------------------------------------------------------- */
@@ -84,11 +89,11 @@ void monero_init_private_key(void) {
     path[2] = 0x80000000;
     path[3] = 0x00000000;
     path[4] = 0x00000000;
+
     os_perso_derive_node_bip32(CX_CURVE_SECP256K1, path, 5, seed, chain);
 
     switch (N_oxen_state->key_mode) {
         case KEY_MODE_SEED:
-
             oxen_keccak_256(&G_oxen_state.keccak, seed, 32, G_oxen_state.spend_priv);
             monero_reduce(G_oxen_state.spend_priv);
             oxen_keccak_256(&G_oxen_state.keccak,
@@ -96,6 +101,7 @@ void monero_init_private_key(void) {
                             32,
                             G_oxen_state.view_priv);
             monero_reduce(G_oxen_state.view_priv);
+
             break;
 
         case KEY_MODE_EXTERNAL:
@@ -108,6 +114,7 @@ void monero_init_private_key(void) {
             return;
     }
     monero_ecmul_G(G_oxen_state.view_pub, G_oxen_state.view_priv);
+
     monero_ecmul_G(G_oxen_state.spend_pub, G_oxen_state.spend_priv);
 
     // generate key protection

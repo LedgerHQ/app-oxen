@@ -753,6 +753,7 @@ void ui_menu_main_display(void) {
     if (G_ux.stack_count == 0) {
         ux_stack_push();
     }
+
     ux_flow_init(0, ux_flow_main, NULL);
 }
 /* --- INIT --- */
