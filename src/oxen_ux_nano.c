@@ -681,7 +681,9 @@ void ui_menu_any_pubaddr_display(unsigned char* pub_view,
     switch (G_oxen_state.disp_addr_mode) {
         case 0:
         case DISP_MAIN:
-            strncpy(G_oxen_state.ux_addr_type, "Regular address", sizeof(G_oxen_state.ux_addr_type));
+            strncpy(G_oxen_state.ux_addr_type,
+                    "Regular address",
+                    sizeof(G_oxen_state.ux_addr_type));
             if (N_oxen_state->network_id == MAINNET)
                 strncpy(G_oxen_state.ux_addr_info, "(mainnet)", sizeof(G_oxen_state.ux_addr_info));
             else if (N_oxen_state->network_id == TESTNET)
@@ -701,10 +703,14 @@ void ui_menu_any_pubaddr_display(unsigned char* pub_view,
             break;
 
         case DISP_INTEGRATED:
-            strncpy(G_oxen_state.ux_addr_type, "Integr. address", sizeof(G_oxen_state.ux_addr_type));
+            strncpy(G_oxen_state.ux_addr_type,
+                    "Integr. address",
+                    sizeof(G_oxen_state.ux_addr_type));
             // Copy the payment id into place *first*, before the label, because it overlaps with
             // ux_addr_info
-            memmove(G_oxen_state.ux_addr_info + 9, G_oxen_state.payment_id, sizeof(G_oxen_state.payment_id));
+            memmove(G_oxen_state.ux_addr_info + 9,
+                    G_oxen_state.payment_id,
+                    sizeof(G_oxen_state.payment_id));
             memmove(G_oxen_state.ux_addr_info, "Pay. ID: ", 9);
             break;
     }
