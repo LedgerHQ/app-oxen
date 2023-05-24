@@ -96,9 +96,18 @@ int monero_apdu_put_key(void) {
     unsigned char raw[32];
     unsigned char pub[32];
     unsigned char sec[32];
+    int address_size = 95;
+    switch (N_oxen_state->network_id) {
+        case TESTNET:
+        case DEVNET:
+            address_size = 97;
+            break;
+        default:
+            break;
+    }
 
     // option + priv/pub view key + priv/pub spend key + base58 address
-    if (G_oxen_state.io_length != (1 + 32 * 2 + 32 * 2 + 95)) {
+    if (G_oxen_state.io_length != (1 + 32 * 2 + 32 * 2 + address_size)) {
         THROW(SW_WRONG_LENGTH);
         return SW_WRONG_LENGTH;
     }
@@ -157,6 +166,27 @@ int monero_apdu_get_network(void) {
     return SW_OK;
 }
 
+int monero_apdu_reset_network(void) {
+#ifdef DEBUG_HWDEVICE
+    monero_io_discard(1);
+    // On (and only on) a debug build we allow this command to reset the wallet to a requested
+    // network (without any confirmation).  This is used for testing purposes (and is the only way
+    // to put the ledger into FAKECHAIN mode).
+    uint8_t nettype = G_oxen_state.io_p1;
+    if (
+#ifndef OXEN_ALPHA
+        nettype == MAINNET ||
+#endif
+        nettype == TESTNET || nettype == DEVNET || nettype == FAKECHAIN) {
+        oxen_install(nettype);
+        monero_init();
+        return SW_OK;
+    }
+#endif
+    // On a non-debug build this command always fails.
+    THROW(SW_COMMAND_NOT_ALLOWED);
+}
+
 /* ----------------------------------------------------------------------- */
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
@@ -188,7 +218,7 @@ int monero_apdu_get_key(void) {
             }
             break;
 
-#if DEBUG_HWDEVICE
+#ifdef DEBUG_HWDEVICE
         // get info
         case 3: {
             unsigned int path[5];
@@ -549,10 +579,10 @@ int oxen_apdu_generate_unlock_signature(void) {
     return SW_OK;
 }
 
-// Generates an LNS hash
+// Generates an ONS hash
 int oxen_apdu_generate_lns_hash(void) {
     if (G_oxen_state.io_p1 == 0) {
-        // Confirm the LNS initialization with the user
+        // Confirm the ONS initialization with the user
         monero_io_discard(1);
         ui_menu_lns_validation_display();
         return 0;

@@ -28,6 +28,7 @@ class Type(enum.IntEnum):
 
 @enum.unique
 class InsType(enum.IntEnum):
+    INS_NONE = 0x00
     INS_RESET = 0x02
     INS_LOCK_DISPLAY = 0x04
 
@@ -68,7 +69,8 @@ class InsType(enum.IntEnum):
     INS_CLOSE_TX = 0x80
 
     INS_GET_TX_PROOF = 0xA0
-    INS_GEN_SIGNATURE = 0xA2
+    INS_GEN_UNLOCK_SIGNATURE =  0xA2
+    INS_GEN_LNS_SIGNATURE    =  0xA3
     INS_GEN_RING_SIGNATURE = 0xA4
 
     INS_GET_RESPONSE = 0xc0

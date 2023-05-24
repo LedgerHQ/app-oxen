@@ -15,12 +15,7 @@ endif
 
 #Oxen /44'/240'
 APP_LOAD_PARAMS  =  --path "44'/240'" --curve secp256k1
-# OR MAYBE ? APP_LOAD_PARAMS=  --path "44'" --curve secp256k1 # based on boilerplate
-ifeq ($(TARGET_NAME), TARGET_NANOX)
-APP_LOAD_PARAMS+=--appFlags 0x200  # APPLICATION_FLAG_BOLOS_SETTINGS
-else
-APP_LOAD_PARAMS+=--appFlags 0x40
-endif
+APP_LOAD_PARAMS += --appFlags 0x240  # APPLICATION_FLAG_BOLOS_SETTINGS & global pin
 APP_LOAD_PARAMS += $(COMMON_LOAD_PARAMS)
 
 APPNAME = "Oxen"
@@ -163,13 +158,3 @@ dep/%.d: %.c Makefile
 
 listvariants:
 	@echo VARIANTS COIN oxen
-
-
-# We probably don't need this as the nanox default is 1500 and nanos default is 1024
-# ifeq ($(TARGET_NAME),TARGET_NANOS)
-# Rewrite the bolos sdk script to increase the stack size slightly
-
-# script.ld: $(BOLOS_SDK)/script.ld Makefile
-# 	sed -e 's/^STACK_SIZE\s*=\s*[0-9]\+;/STACK_SIZE = 712;/' $< >$@
-# endif
-

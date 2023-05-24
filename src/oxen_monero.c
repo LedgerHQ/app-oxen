@@ -109,31 +109,10 @@ const unsigned char encoded_block_sizes[] = {0, 2, 3, 5, 6, 7, 9, 10, 11};
 
 static uint64_t uint_8be_to_64(const unsigned char* data, size_t size) {
     uint64_t res = 0;
-    switch (9 - size) {
-        case 1:
-            res |= *data++;
-        case 2:
-            res <<= 8;
-            res |= *data++;
-        case 3:
-            res <<= 8;
-            res |= *data++;
-        case 4:
-            res <<= 8;
-            res |= *data++;
-        case 5:
-            res <<= 8;
-            res |= *data++;
-        case 6:
-            res <<= 8;
-            res |= *data++;
-        case 7:
-            res <<= 8;
-            res |= *data++;
-        case 8:
-            res <<= 8;
-            res |= *data;
-            break;
+    for (size_t i = 0; i < 8; i++) {
+        if (i >= size) break;
+        res <<= 8;
+        res |= data[i];
     }
 
     return res;
@@ -175,6 +154,7 @@ unsigned char oxen_wallet_address(char* str_b58,
             break;
 #ifndef OXEN_ALPHA
         case MAINNET:
+        case FAKECHAIN:
             if (paymentID)
                 prefix = MAINNET_CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX;
             else if (is_subbadress)

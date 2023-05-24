@@ -110,10 +110,8 @@ unsigned int ui_menu_info_action(void) {
 }
 
 void ui_menu_info_display2(const char* line1, const char* line2) {
-    memmove(G_oxen_state.ux_info1, line1, sizeof(G_oxen_state.ux_info1) - 1);
-    memmove(G_oxen_state.ux_info2, line2, sizeof(G_oxen_state.ux_info2) - 1);
-    G_oxen_state.ux_info1[sizeof(G_oxen_state.ux_info1) - 1] = 0;
-    G_oxen_state.ux_info2[sizeof(G_oxen_state.ux_info2) - 1] = 0;
+    strncpy(G_oxen_state.ux_info1, line1, sizeof(G_oxen_state.ux_info1));
+    strncpy(G_oxen_state.ux_info2, line2, sizeof(G_oxen_state.ux_info2));
     ux_flow_init(0, ux_flow_info, NULL);
 }
 
@@ -124,14 +122,13 @@ void ui_menu_info_display(void) {
 /* -------------------------------- OPEN TX UX --------------------------------- */
 static const char* processing_tx(void) {
     return G_oxen_state.tx_type == TXTYPE_STAKE    ? "Processing Stake"
-           : G_oxen_state.tx_type == TXTYPE_LNS    ? "Processing LNS"
+           : G_oxen_state.tx_type == TXTYPE_ONS    ? "Processing ONS"
            : G_oxen_state.tx_type == TXTYPE_UNLOCK ? "Processing Unlck"
                                                    : "Processing TX";
 }
 
 void ui_menu_opentx_display(unsigned char final_step) {
-    memmove(G_oxen_state.ux_info1, processing_tx(), sizeof(G_oxen_state.ux_info1) - 1);
-    G_oxen_state.ux_info1[sizeof(G_oxen_state.ux_info1) - 1] = 0;
+    strncpy(G_oxen_state.ux_info1, processing_tx(), sizeof(G_oxen_state.ux_info1));
 
     if (final_step)
         ux_flow_init(0, ux_flow_info_icon4, NULL);
@@ -151,7 +148,7 @@ void ui_menu_amount_validation_action(unsigned int value);
     UX_STEP_NOCB(name, bn, {title, G_oxen_state.ux_amount})
 
 OXEN_UX_CONFIRM_AMOUNT_STEP(ux_menu_validation_fee_step, "Confirm Fee");
-OXEN_UX_CONFIRM_AMOUNT_STEP(ux_menu_validation_lns_fee_step, "Confirm LNS Fee");
+OXEN_UX_CONFIRM_AMOUNT_STEP(ux_menu_validation_lns_fee_step, "Confirm ONS Fee");
 OXEN_UX_CONFIRM_AMOUNT_STEP(ux_menu_validation_change_step, "Amount (change)");
 OXEN_UX_CONFIRM_AMOUNT_STEP(ux_menu_validation_timelock_step, "Timelock");
 
@@ -255,7 +252,7 @@ void ui_menu_stake_validation_display(void) {
     ux_flow_init(0, ux_flow_stake_validation, NULL);
 }
 
-/** Common menu items for special transaction (i.e. unlocks and LNS) */
+/** Common menu items for special transaction (i.e. unlocks and ONS) */
 void ui_menu_special_validation_action(unsigned int value) {
     unsigned short sw;
     if (value == ACCEPT) {
@@ -281,7 +278,7 @@ void ui_menu_unlock_validation_display(void) {
     ux_flow_init(0, ux_flow_unlock_validation, NULL);
 }
 
-/* LNS */
+/* ONS */
 UX_STEP_NOCB(ux_menu_lns_validation_step, nn, {"Confirm Oxen", "Name Service TX"});
 UX_FLOW(ux_flow_lns_validation,
         &ux_menu_lns_validation_step,
@@ -684,17 +681,19 @@ void ui_menu_any_pubaddr_display(unsigned char* pub_view,
     switch (G_oxen_state.disp_addr_mode) {
         case 0:
         case DISP_MAIN:
-            memmove(G_oxen_state.ux_addr_type, "Regular address", 15);
+            strncpy(G_oxen_state.ux_addr_type, "Regular address", sizeof(G_oxen_state.ux_addr_type));
             if (N_oxen_state->network_id == MAINNET)
-                memmove(G_oxen_state.ux_addr_info, "(mainnet)", 9);
+                strncpy(G_oxen_state.ux_addr_info, "(mainnet)", sizeof(G_oxen_state.ux_addr_info));
             else if (N_oxen_state->network_id == TESTNET)
-                memmove(G_oxen_state.ux_addr_info, "(testnet)", 9);
+                strncpy(G_oxen_state.ux_addr_info, "(testnet)", sizeof(G_oxen_state.ux_addr_info));
             else if (N_oxen_state->network_id == DEVNET)
-                memmove(G_oxen_state.ux_addr_info, "(devnet)", 8);
+                strncpy(G_oxen_state.ux_addr_info, "(devnet)", sizeof(G_oxen_state.ux_addr_info));
+            else if (N_oxen_state->network_id == FAKECHAIN)
+                strncpy(G_oxen_state.ux_addr_info, "(fakenet)", sizeof(G_oxen_state.ux_addr_info));
             break;
 
         case DISP_SUB:
-            memmove(G_oxen_state.ux_addr_type, "Subaddress", 10);
+            strncpy(G_oxen_state.ux_addr_type, "Subaddress", sizeof(G_oxen_state.ux_addr_type));
             // Copy these out because they are in a union with the ux_addr_info string
             unsigned int M = G_oxen_state.disp_addr_M;
             unsigned int m = G_oxen_state.disp_addr_m;
@@ -702,10 +701,10 @@ void ui_menu_any_pubaddr_display(unsigned char* pub_view,
             break;
 
         case DISP_INTEGRATED:
-            memmove(G_oxen_state.ux_addr_type, "Integr. address", 15);
+            strncpy(G_oxen_state.ux_addr_type, "Integr. address", sizeof(G_oxen_state.ux_addr_type));
             // Copy the payment id into place *first*, before the label, because it overlaps with
             // ux_addr_info
-            memmove(G_oxen_state.ux_addr_info + 9, G_oxen_state.payment_id, 16);
+            memmove(G_oxen_state.ux_addr_info + 9, G_oxen_state.payment_id, sizeof(G_oxen_state.payment_id));
             memmove(G_oxen_state.ux_addr_info, "Pay. ID: ", 9);
             break;
     }

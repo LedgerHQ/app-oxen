@@ -44,7 +44,7 @@
 /* cannot send more that F0 bytes in CCID, why? do not know for now
  *  So set up length to F0 minus 2 bytes for SW
  */
-#define MONERO_APDU_LENGTH 0xFE
+#define MONERO_APDU_LENGTH 0xEE
 
 /* --- ... --- */
 #define MAINNET_CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX            114
@@ -122,7 +122,7 @@ typedef struct oxen_nv_state_t {
 
 enum device_mode { NONE, TRANSACTION_CREATE_REAL, TRANSACTION_CREATE_FAKE, TRANSACTION_PARSE };
 
-enum txtype { TXTYPE_STANDARD, TXTYPE_STATE_CHANGE, TXTYPE_UNLOCK, TXTYPE_STAKE, TXTYPE_LNS };
+enum txtype { TXTYPE_STANDARD, TXTYPE_STATE_CHANGE, TXTYPE_UNLOCK, TXTYPE_STAKE, TXTYPE_ONS };
 
 #define DISP_MAIN       0x51
 #define DISP_SUB        0x52
@@ -281,7 +281,8 @@ typedef struct oxen_v_state_t {
 #define INS_RESET        0x02
 #define INS_LOCK_DISPLAY 0x04
 
-#define INS_GET_NETWORK 0x10
+#define INS_GET_NETWORK   0x10
+#define INS_RESET_NETWORK 0x11
 
 #define INS_GET_KEY            0x20
 #define INS_DISPLAY_ADDRESS    0x21
@@ -321,7 +322,7 @@ typedef struct oxen_v_state_t {
 
 #define INS_GET_TX_PROOF            0xA0
 #define INS_GEN_UNLOCK_SIGNATURE    0xA2
-#define INS_GEN_LNS_SIGNATURE       0xA3
+#define INS_GEN_ONS_SIGNATURE       0xA3
 #define INS_GEN_KEY_IMAGE_SIGNATURE 0xA4
 
 #define INS_GET_RESPONSE 0xc0
