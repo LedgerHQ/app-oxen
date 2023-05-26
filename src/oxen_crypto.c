@@ -348,7 +348,7 @@ void monero_ge_fromfe_frombytes(unsigned char *ge, const unsigned char *bytes) {
 #endif
 
     union {
-        unsigned char _Pxy[65];
+        unsigned char _Pxy[PXY_SIZE];
         struct {
             unsigned char _uv7[32];
             unsigned char _v3[32];
@@ -700,10 +700,10 @@ void monero_check_scalar_not_null(const unsigned char *s) {
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
 void monero_ecmul_G(unsigned char *W, const unsigned char *scalar32) {
-    unsigned char Pxy[65];
+    unsigned char Pxy[PXY_SIZE];
     unsigned char s[32];
     monero_reverse32(s, scalar32);
-    memmove(Pxy, C_ED25519_G, 65);
+    memmove(Pxy, C_ED25519_G, PXY_SIZE);
     cx_ecfp_scalar_mult(CX_CURVE_Ed25519, Pxy, sizeof(Pxy), s, 32);
     cx_edwards_compress_point(CX_CURVE_Ed25519, Pxy, sizeof(Pxy));
     memmove(W, &Pxy[1], 32);
@@ -713,7 +713,7 @@ void monero_ecmul_G(unsigned char *W, const unsigned char *scalar32) {
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
 void monero_ecmul_H(unsigned char *W, const unsigned char *scalar32) {
-    unsigned char Pxy[65];
+    unsigned char Pxy[PXY_SIZE];
     unsigned char s[32];
 
     monero_reverse32(s, scalar32);
@@ -732,7 +732,7 @@ void monero_ecmul_H(unsigned char *W, const unsigned char *scalar32) {
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
 void monero_ecmul_k(unsigned char *W, const unsigned char *P, const unsigned char *scalar32) {
-    unsigned char Pxy[65];
+    unsigned char Pxy[PXY_SIZE];
     unsigned char s[32];
 
     monero_reverse32(s, scalar32);
@@ -751,7 +751,7 @@ void monero_ecmul_k(unsigned char *W, const unsigned char *P, const unsigned cha
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
 void monero_ecmul_8(unsigned char *W, const unsigned char *P) {
-    unsigned char Pxy[65];
+    unsigned char Pxy[PXY_SIZE];
 
     Pxy[0] = 0x02;
     memmove(&Pxy[1], P, 32);
@@ -767,8 +767,8 @@ void monero_ecmul_8(unsigned char *W, const unsigned char *P) {
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
 void monero_ecadd(unsigned char *W, const unsigned char *P, const unsigned char *Q) {
-    unsigned char Pxy[65];
-    unsigned char Qxy[65];
+    unsigned char Pxy[PXY_SIZE];
+    unsigned char Qxy[PXY_SIZE];
 
     Pxy[0] = 0x02;
     memmove(&Pxy[1], P, 32);
@@ -788,8 +788,8 @@ void monero_ecadd(unsigned char *W, const unsigned char *P, const unsigned char 
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
 void monero_ecsub(unsigned char *W, const unsigned char *P, const unsigned char *Q) {
-    unsigned char Pxy[65];
-    unsigned char Qxy[65];
+    unsigned char Pxy[PXY_SIZE];
+    unsigned char Qxy[PXY_SIZE];
 
     Pxy[0] = 0x02;
     memmove(&Pxy[1], P, 32);

@@ -226,7 +226,7 @@ int monero_io_fetch_decrypt(unsigned char* buffer, int len, int type) {
     }
 
     if (G_oxen_state.tx_in_progress) {
-        monero_io_assert_available(len + 32);
+        monero_io_assert_available(len + HMAC_SIZE);
         monero_io_verify_hmac_for(G_oxen_state.io_buffer + G_oxen_state.io_offset,
                                   len,
                                   G_oxen_state.io_buffer + G_oxen_state.io_offset + len,
