@@ -222,7 +222,7 @@ void oxen_currency_str(uint64_t atomic_oxen, char* str) {
     }
 
     // Write the value out in reverse; this is a bit easier since we don't know the length yet
-    for (len = 0; atomic_oxen; ++len) {
+    for (len = 0; atomic_oxen > 0; ++len) {
         if (len == COIN_DECIMAL) str[len++] = '.';
         str[len] = '0' + atomic_oxen % 10;
         atomic_oxen /= 10;
