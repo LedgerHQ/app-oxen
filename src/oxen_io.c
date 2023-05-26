@@ -412,7 +412,6 @@ int monero_io_do(unsigned int io_flags) {
     G_oxen_state.io_ins = G_io_apdu_buffer[1];
     G_oxen_state.io_p1 = G_io_apdu_buffer[2];
     G_oxen_state.io_p2 = G_io_apdu_buffer[3];
-    G_oxen_state.io_lc = 0;
     G_oxen_state.io_le = 0;
     G_oxen_state.io_lc = G_io_apdu_buffer[4];
     memmove(G_oxen_state.io_buffer, G_io_apdu_buffer + 5, G_oxen_state.io_lc);
