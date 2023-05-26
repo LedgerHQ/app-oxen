@@ -59,7 +59,9 @@ static void monero_uint642str(uint64_t val, char *str) {
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
 int monero_apdu_prefix_hash_init(void) {
-    cx_keccak_init(&G_oxen_state.keccak_alt, 256);
+    cx_err_t err = cx_keccak_init_no_throw(&G_oxen_state.keccak_alt, 256);
+    if (err != CX_OK)
+        THROW(SW_WRONG_DATA);
     if (G_oxen_state.tx_sig_mode == TRANSACTION_CREATE_REAL) {
         if (monero_io_fetch_varint16() != 4)  // tx version; we only support v4 txes
             THROW(SW_WRONG_DATA_RANGE);

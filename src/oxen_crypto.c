@@ -132,7 +132,9 @@ void monero_aes_derive(cx_aes_key_t *sk,
 
     oxen_keccak_256(&G_oxen_state.keccak_alt, h1, 32, h1);
 
-    cx_aes_init_key(h1, 16, sk);
+    cx_err_t err = cx_aes_init_key_no_throw(h1, 16, sk);
+    if (err != CX_OK)
+        THROW(SW_WRONG_DATA);
 }
 
 /* ----------------------------------------------------------------------- */
@@ -141,7 +143,9 @@ void monero_aes_derive(cx_aes_key_t *sk,
 void monero_aes_generate(cx_aes_key_t *sk) {
     unsigned char h1[16];
     cx_rng(h1, 16);
-    cx_aes_init_key(h1, 16, sk);
+    cx_err_t err = cx_aes_init_key_no_throw(h1, 16, sk);
+    if (err != CX_OK)
+        THROW(SW_WRONG_DATA);
 }
 
 /* ----------------------------------------------------------------------- */
@@ -704,7 +708,9 @@ void monero_ecmul_G(unsigned char *W, const unsigned char *scalar32) {
     unsigned char s[32];
     monero_reverse32(s, scalar32);
     memmove(Pxy, C_ED25519_G, PXY_SIZE);
-    cx_ecfp_scalar_mult(CX_CURVE_Ed25519, Pxy, sizeof(Pxy), s, 32);
+    cx_err_t err = cx_ecfp_scalar_mult_no_throw(CX_CURVE_Ed25519, Pxy, s, 32);
+    if (err != CX_OK)
+        THROW(SW_WRONG_DATA);
     cx_edwards_compress_point(CX_CURVE_Ed25519, Pxy, sizeof(Pxy));
     memmove(W, &Pxy[1], 32);
 }
@@ -722,7 +728,9 @@ void monero_ecmul_H(unsigned char *W, const unsigned char *scalar32) {
     memmove(&Pxy[1], C_ED25519_Hy, 32);
     cx_edwards_decompress_point(CX_CURVE_Ed25519, Pxy, sizeof(Pxy));
 
-    cx_ecfp_scalar_mult(CX_CURVE_Ed25519, Pxy, sizeof(Pxy), s, 32);
+    cx_err_t err = cx_ecfp_scalar_mult_no_throw(CX_CURVE_Ed25519, Pxy, s, 32);
+    if (err != CX_OK)
+        THROW(SW_WRONG_DATA);
     cx_edwards_compress_point(CX_CURVE_Ed25519, Pxy, sizeof(Pxy));
 
     memmove(W, &Pxy[1], 32);
