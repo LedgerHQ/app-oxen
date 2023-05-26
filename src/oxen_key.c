@@ -567,7 +567,7 @@ int oxen_apdu_generate_unlock_signature(void) {
 
     // fetch
     pub = G_oxen_state.io_buffer + G_oxen_state.io_offset;
-    monero_io_fetch(NULL, 32);
+    monero_io_skip(32);
     monero_io_fetch_decrypt(sec, 32, TYPE_SCALAR);
     monero_io_discard(0);
 
@@ -756,11 +756,11 @@ int monero_apu_generate_txout_keys(/*size_t tx_version, crypto::secret_key tx_se
     }
     monero_io_fetch_decrypt_key(tx_key);
     txkey_pub = G_oxen_state.io_buffer + G_oxen_state.io_offset;
-    monero_io_fetch(NULL, 32);
+    monero_io_skip(32);
     Aout = G_oxen_state.io_buffer + G_oxen_state.io_offset;
-    monero_io_fetch(NULL, 32);
+    monero_io_skip(32);
     Bout = G_oxen_state.io_buffer + G_oxen_state.io_offset;
-    monero_io_fetch(NULL, 32);
+    monero_io_skip(32);
     output_index = monero_io_fetch_u32();
     is_change = monero_io_fetch_u8();
     is_subaddress = monero_io_fetch_u8();

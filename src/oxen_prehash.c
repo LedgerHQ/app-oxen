@@ -103,9 +103,9 @@ int monero_apdu_clsag_prehash_update(void) {
     is_subaddress = monero_io_fetch_u8();
     is_change = monero_io_fetch_u8();
     Aout = G_oxen_state.io_buffer + G_oxen_state.io_offset;
-    monero_io_fetch(NULL, 32);
+    monero_io_skip(32);
     Bout = G_oxen_state.io_buffer + G_oxen_state.io_offset;
-    monero_io_fetch(NULL, 32);
+    monero_io_skip(32);
     monero_io_fetch_decrypt(aH, 32, TYPE_AMOUNT_KEY);
     monero_io_fetch(C, 32);
     monero_io_fetch(k, 32);

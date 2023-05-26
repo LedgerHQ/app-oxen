@@ -183,9 +183,15 @@ void monero_io_assert_available(int sz) {
 
 int monero_io_fetch(unsigned char* buffer, int len) {
     monero_io_assert_available(len);
-    if (buffer) {
-        memmove(buffer, G_oxen_state.io_buffer + G_oxen_state.io_offset, len);
-    }
+    if (!buffer)
+        THROW(SW_WRONG_DATA);
+    memmove(buffer, G_oxen_state.io_buffer + G_oxen_state.io_offset, len);
+    G_oxen_state.io_offset += len;
+    return len;
+}
+
+int monero_io_skip(int len) {
+    monero_io_assert_available(len);
     G_oxen_state.io_offset += len;
     return len;
 }
