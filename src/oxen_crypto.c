@@ -202,7 +202,14 @@ unsigned int monero_decode_varint(const unsigned char *varint,
 /* ----------------------------------------------------------------------- */
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
-void monero_reverse32(unsigned char *rscal, const unsigned char *scal) {
+void monero_reverse32(unsigned char *rscal, const unsigned char *scal, int len) {
+    if (rscal == NULL || scal == NULL) {
+        THROW(SW_WRONG_DATA);
+    }
+
+    if (len != 32) {
+        THROW(SW_WRONG_DATA);
+    }
     unsigned char x;
     unsigned int i;
     for (i = 0; i < 16; i++) {
@@ -334,7 +341,7 @@ const unsigned char C_fe_qm5div8[] = {
     0x0f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfd};
 
-void monero_ge_fromfe_frombytes(unsigned char *ge, const unsigned char *bytes) {
+void monero_ge_fromfe_frombytes(unsigned char *ge, const unsigned char *bytes, int len) {
 #define MOD              (unsigned char *) C_ED25519_FIELD, 32
 #define fe_isnegative(f) (f[31] & 1)
 #define u                (G_oxen_state.io_buffer + 0 * 32)
@@ -368,7 +375,7 @@ void monero_ge_fromfe_frombytes(unsigned char *ge, const unsigned char *bytes) {
     unsigned char sign;
 
     // cx works in BE
-    monero_reverse32(u, bytes);
+    monero_reverse32(u, bytes, len);
     cx_math_modm(u, 32, (unsigned char *) C_ED25519_FIELD, 32);
 
     cx_math_multm(v, u, u, MOD); /* 2 * u^2 */
@@ -473,7 +480,7 @@ void monero_hash_to_scalar(unsigned char *scalar,
                            const unsigned char *raw,
                            const unsigned int raw_len) {
     oxen_keccak_256(&G_oxen_state.keccak, raw, raw_len, scalar);
-    monero_reduce(scalar);
+    monero_reduce(scalar, 32);
 }
 
 /* ----------------------------------------------------------------------- */
@@ -481,7 +488,7 @@ void monero_hash_to_scalar(unsigned char *scalar,
 /* ----------------------------------------------------------------------- */
 void monero_hash_to_ec(unsigned char *ec, const unsigned char *ec_pub) {
     oxen_keccak_256(&G_oxen_state.keccak, ec_pub, 32, ec);
-    monero_ge_fromfe_frombytes(ec, ec);
+    monero_ge_fromfe_frombytes(ec, ec, 32);
     monero_ecmul_8(ec, ec);
 }
 
@@ -489,7 +496,7 @@ void monero_hash_to_ec(unsigned char *ec, const unsigned char *ec_pub) {
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
 void monero_generate_keypair(unsigned char *ec_pub, unsigned char *ec_priv) {
-    monero_rng_mod_order(ec_priv);
+    monero_rng_mod_order(ec_priv, 32);
     monero_ecmul_G(ec_pub, ec_priv);
 }
 
@@ -500,9 +507,9 @@ void monero_generate_key_derivation(unsigned char *drv_data,
                                     const unsigned char *P,
                                     const unsigned char *scalar) {
     unsigned char s[32];
-    monero_reverse32(s, scalar);
+    monero_reverse32(s, scalar, sizeof(s));
     cx_math_multm(s, s, C_EIGHT, (unsigned char *) C_ED25519_ORDER, 32);
-    monero_reverse32(s, s);
+    monero_reverse32(s, s, sizeof(s));
     monero_ecmul_k(drv_data, P, s);
 }
 
@@ -518,7 +525,7 @@ void monero_derivation_to_scalar(unsigned char *scalar,
     oxen_hash_update(&G_oxen_state.keccak, drv_data, 32);
     oxen_hash_update(&G_oxen_state.keccak, varint, monero_encode_varint(varint, 8, out_idx));
     oxen_hash_final(&G_oxen_state.keccak, scalar);
-    monero_reduce(scalar);
+    monero_reduce(scalar, 32);
 }
 
 /* ----------------------------------------------------------------------- */
@@ -532,7 +539,7 @@ void monero_derive_secret_key(unsigned char *x,
     monero_derivation_to_scalar(x, drv_data, out_idx);
 
     // generate
-    monero_addm(x, x, ec_priv);
+    monero_addm(x, x, ec_priv, 32);
 }
 
 /* ----------------------------------------------------------------------- */
@@ -577,7 +584,7 @@ void oxen_generate_key_image_signature(unsigned char *sig,
     cx_keccak_init(&G_oxen_state.keccak_alt, 256);        // Need to calculate H(I || L || R)
     oxen_hash_update(&G_oxen_state.keccak_alt, img, 32);  // H(I ||...
 
-    monero_rng_mod_order(k);                              // k = random ]0..L[
+    monero_rng_mod_order(k, sizeof(k));                              // k = random ]0..L[
     monero_ecmul_G(tmp, k);                               // L0 = kG
     oxen_hash_update(&G_oxen_state.keccak_alt, tmp, 32);  // H(...|| L ||...)
 
@@ -588,10 +595,10 @@ void oxen_generate_key_image_signature(unsigned char *sig,
     // sig = [c,r]
     // c = H(I || L || R) mod L
     oxen_hash_final(&G_oxen_state.keccak_alt, sig);
-    monero_reduce(sig);
+    monero_reduce(sig, 32);
 
-    monero_multm(tmp, x, sig);      // xc
-    monero_subm(sig + 32, k, tmp);  // r = k - xc
+    monero_multm(tmp, x, sig, sizeof(tmp));      // xc
+    monero_subm(sig + 32, k, tmp, sizeof(k));  // r = k - xc
 }
 
 /* ----------------------------------------------------------------------- */
@@ -604,7 +611,7 @@ void oxen_generate_signature(unsigned char *sig,
     unsigned char r[32];
     unsigned char tmp[32];
 
-    monero_rng_mod_order(r);  // r = random ]0..L[
+    monero_rng_mod_order(r, sizeof(r));  // r = random ]0..L[
     monero_ecmul_G(tmp, r);   // R = rG
 
     cx_keccak_init(&G_oxen_state.keccak_alt, 256);         // Need to calculate H(M || A || R)
@@ -614,10 +621,10 @@ void oxen_generate_signature(unsigned char *sig,
     // sig = [c,s]
     // c = H(M||A||R) mod L:
     oxen_hash_final(&G_oxen_state.keccak_alt, sig);
-    monero_reduce(sig);
+    monero_reduce(sig, 32);
 
-    monero_multm(tmp, sig, a);      // ac
-    monero_subm(sig + 32, r, tmp);  // s = r - ac
+    monero_multm(tmp, sig, a, sizeof(tmp));      // ac
+    monero_subm(sig + 32, r, tmp, sizeof(r));  // s = r - ac
 }
 
 /* ======================================================================= */
@@ -674,7 +681,7 @@ void monero_get_subaddress_secret_key(unsigned char *sub_s,
     oxen_hash_update(&G_oxen_state.keccak, s, 32);
     oxen_hash_update(&G_oxen_state.keccak, index, 8);
     oxen_hash_final(&G_oxen_state.keccak, sub_s);
-    monero_reduce(sub_s);
+    monero_reduce(sub_s, 32);
 }
 
 /* ======================================================================= */
@@ -686,7 +693,7 @@ void monero_get_subaddress_secret_key(unsigned char *sub_s,
 /* ----------------------------------------------------------------------- */
 void monero_check_scalar_range_1N(const unsigned char *s) {
     unsigned char x[32];
-    monero_reverse32(x, s);
+    monero_reverse32(x, s, sizeof(x));
     if (cx_math_is_zero(x, 32) || cx_math_cmp(x, C_ED25519_ORDER, 32) >= 0) {
         THROW(SW_WRONG_DATA_RANGE);
     }
@@ -706,7 +713,7 @@ void monero_check_scalar_not_null(const unsigned char *s) {
 void monero_ecmul_G(unsigned char *W, const unsigned char *scalar32) {
     unsigned char Pxy[PXY_SIZE];
     unsigned char s[32];
-    monero_reverse32(s, scalar32);
+    monero_reverse32(s, scalar32, sizeof(s));
     memmove(Pxy, C_ED25519_G, PXY_SIZE);
     cx_err_t err = cx_ecfp_scalar_mult_no_throw(CX_CURVE_Ed25519, Pxy, s, 32);
     if (err != CX_OK)
@@ -722,7 +729,7 @@ void monero_ecmul_H(unsigned char *W, const unsigned char *scalar32) {
     unsigned char Pxy[PXY_SIZE];
     unsigned char s[32];
 
-    monero_reverse32(s, scalar32);
+    monero_reverse32(s, scalar32, sizeof(s));
 
     Pxy[0] = 0x02;
     memmove(&Pxy[1], C_ED25519_Hy, 32);
@@ -743,7 +750,7 @@ void monero_ecmul_k(unsigned char *W, const unsigned char *P, const unsigned cha
     unsigned char Pxy[PXY_SIZE];
     unsigned char s[32];
 
-    monero_reverse32(s, scalar32);
+    monero_reverse32(s, scalar32, sizeof(s));
 
     Pxy[0] = 0x02;
     memmove(&Pxy[1], P, 32);
@@ -832,64 +839,64 @@ void monero_genCommitmentMask(unsigned char *c, const unsigned char *sk) {
     oxen_hash_update(&G_oxen_state.keccak, (const unsigned char *) "commitment_mask", 15);
     oxen_hash_update(&G_oxen_state.keccak, sk, 32);
     oxen_hash_final(&G_oxen_state.keccak, c);
-    monero_reduce(c);
+    monero_reduce(c, 32);
 }
 
 /* ----------------------------------------------------------------------- */
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
-void monero_addm(unsigned char *r, const unsigned char *a, const unsigned char *b) {
+void monero_addm(unsigned char *r, const unsigned char *a, const unsigned char *b, int len) {
     unsigned char ra[32];
     unsigned char rb[32];
 
-    monero_reverse32(ra, a);
-    monero_reverse32(rb, b);
-    cx_math_addm(r, ra, rb, (unsigned char *) C_ED25519_ORDER, 32);
-    monero_reverse32(r, r);
+    monero_reverse32(ra, a, len);
+    monero_reverse32(rb, b, len);
+    cx_math_addm(r, ra, rb, (unsigned char *) C_ED25519_ORDER, len);
+    monero_reverse32(r, r, len);
 }
 
 /* ----------------------------------------------------------------------- */
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
-void monero_subm(unsigned char *r, const unsigned char *a, const unsigned char *b) {
+void monero_subm(unsigned char *r, const unsigned char *a, const unsigned char *b, int len) {
     unsigned char ra[32];
     unsigned char rb[32];
 
-    monero_reverse32(ra, a);
-    monero_reverse32(rb, b);
-    cx_math_subm(r, ra, rb, (unsigned char *) C_ED25519_ORDER, 32);
-    monero_reverse32(r, r);
+    monero_reverse32(ra, a, len);
+    monero_reverse32(rb, b, len);
+    cx_math_subm(r, ra, rb, (unsigned char *) C_ED25519_ORDER, len);
+    monero_reverse32(r, r, len);
 }
 /* ----------------------------------------------------------------------- */
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
-void monero_multm(unsigned char *r, const unsigned char *a, const unsigned char *b) {
+void monero_multm(unsigned char *r, const unsigned char *a, const unsigned char *b, int len) {
     unsigned char ra[32];
     unsigned char rb[32];
 
-    monero_reverse32(ra, a);
-    monero_reverse32(rb, b);
-    cx_math_multm(r, ra, rb, (unsigned char *) C_ED25519_ORDER, 32);
-    monero_reverse32(r, r);
+    monero_reverse32(ra, a, len);
+    monero_reverse32(rb, b, len);
+    cx_math_multm(r, ra, rb, (unsigned char *) C_ED25519_ORDER, len);
+    monero_reverse32(r, r, len);
 }
 
 /* ----------------------------------------------------------------------- */
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
-void monero_reduce(unsigned char *r) {
-    monero_reverse32(r, r);
-    cx_math_modm(r, 32, (unsigned char *) C_ED25519_ORDER, 32);
-    monero_reverse32(r, r);
+void monero_reduce(unsigned char *r, int len) {
+    monero_reverse32(r, r, len);
+    cx_math_modm(r, len, (unsigned char *) C_ED25519_ORDER, len);
+    monero_reverse32(r, r, len);
 }
 
 /* ----------------------------------------------------------------------- */
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
-void monero_rng_mod_order(unsigned char *r) {
+void monero_rng_mod_order(unsigned char *r, int len) {
     unsigned char rnd[32 + 8];
     cx_rng(rnd, 32 + 8);
-    cx_math_modm(rnd, 32 + 8, (unsigned char *) C_ED25519_ORDER, 32);
-    monero_reverse32(r, rnd + 8);
+    cx_math_modm(rnd, len + 8, (unsigned char *) C_ED25519_ORDER, len);
+    monero_reverse32(r, rnd + 8, sizeof(rnd) - 8);
 }
 
 /* ----------------------------------------------------------------------- */

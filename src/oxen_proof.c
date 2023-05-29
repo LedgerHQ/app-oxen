@@ -53,7 +53,7 @@ int monero_apdu_get_tx_proof(void) {
     monero_io_discard(0);
 
     // Generate random k
-    monero_rng_mod_order(k);
+    monero_rng_mod_order(k, 32);
     // tmp = msg
     memmove(G_oxen_state.tmp + 32 * 0, msg, 32);
     // tmp = msg || D
@@ -98,9 +98,9 @@ int monero_apdu_get_tx_proof(void) {
     // monero_hash_to_scalar(sig_c, &G_oxen_state.tmp[0], 32 * 8);
 
     // sig_c*r
-    monero_multm(XY, sig_c, r);
+    monero_multm(XY, sig_c, r, sizeof(r));
     // sig_r = k - sig_c*r
-    monero_subm(sig_r, k, XY);
+    monero_subm(sig_r, k, XY, sizeof(XY));
 
     monero_io_insert(sig_c, 32);
     monero_io_insert(sig_r, 32);

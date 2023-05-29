@@ -76,7 +76,7 @@ int monero_apdu_open_tx_cont(void) {
     cx_rng(G_oxen_state.hmac_key, 32);
 #endif
 
-    monero_rng_mod_order(G_oxen_state.r);
+    monero_rng_mod_order(G_oxen_state.r, sizeof(G_oxen_state.r));
     monero_ecmul_G(G_oxen_state.R, G_oxen_state.r);
 
     monero_io_insert(G_oxen_state.R, 32);

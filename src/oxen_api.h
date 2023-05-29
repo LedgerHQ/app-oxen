@@ -146,7 +146,7 @@ extern const unsigned char C_FAKE_SEC_SPEND_KEY[32];
 int is_fake_view_key(const unsigned char *s);
 int is_fake_spend_key(const unsigned char *s);
 
-void monero_ge_fromfe_frombytes(unsigned char *ge, const unsigned char *bytes);
+void monero_ge_fromfe_frombytes(unsigned char *ge, const unsigned char *bytes, int len);
 void monero_sc_add(unsigned char *r, const unsigned char *s1, const unsigned char *s2);
 void monero_hash_to_scalar(unsigned char *scalar, const unsigned char *raw, unsigned int len);
 void monero_hash_to_ec(unsigned char *ec, const unsigned char *ec_pub);
@@ -254,7 +254,7 @@ unsigned int monero_decode_varint(const unsigned char *varint,
                                   uint64_t *v);
 
 /** */
-void monero_reverse32(unsigned char *rscal, const unsigned char *scal);
+void monero_reverse32(unsigned char *rscal, const unsigned char *scal, int len);
 
 /**
  * Hps: keccak(drv_data|varint(out_idx))
@@ -303,18 +303,18 @@ void monero_ecadd(unsigned char *W, const unsigned char *P, const unsigned char 
 void monero_ecsub(unsigned char *W, const unsigned char *P, const unsigned char *Q);
 
 /* r = (a+b) %order */
-void monero_addm(unsigned char *r, const unsigned char *a, const unsigned char *b);
+void monero_addm(unsigned char *r, const unsigned char *a, const unsigned char *b, int len);
 
 /* r = (a-b) %order */
-void monero_subm(unsigned char *r, const unsigned char *a, const unsigned char *b);
+void monero_subm(unsigned char *r, const unsigned char *a, const unsigned char *b, int len);
 
 /* r = (a*b) %order */
-void monero_multm(unsigned char *r, const unsigned char *a, const unsigned char *b);
+void monero_multm(unsigned char *r, const unsigned char *a, const unsigned char *b, int len);
 
 /* r %= order */
-void monero_reduce(unsigned char *r);
+void monero_reduce(unsigned char *r, int len);
 
-void monero_rng_mod_order(unsigned char *r);
+void monero_rng_mod_order(unsigned char *r, int len);
 /* ----------------------------------------------------------------------- */
 /* ---                                IO                              ---- */
 /* ----------------------------------------------------------------------- */

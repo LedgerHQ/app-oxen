@@ -326,7 +326,7 @@ int monero_apdu_sc_add(/*unsigned char *r, unsigned char *s1, unsigned char *s2*
             monero_lock_and_throw(SW_WRONG_DATA);
         }
     }
-    monero_addm(r, s1, s2);
+    monero_addm(r, s1, s2, sizeof(r));
     monero_io_insert_encrypt(r, 32, TYPE_SCALAR);
     return SW_OK;
 }
@@ -631,7 +631,7 @@ int oxen_apdu_generate_lns_signature(void) {
         memmove(PKEY, G_oxen_state.spend_pub, 32);
     } else {
         monero_get_subaddress_secret_key(STMP, G_oxen_state.view_priv, subaddr_index);
-        monero_addm(SKEY, STMP, G_oxen_state.spend_priv);
+        monero_addm(SKEY, STMP, G_oxen_state.spend_priv, sizeof(G_oxen_state.spend_priv));
         monero_ecmul_G(PKEY, SKEY);
     }
 

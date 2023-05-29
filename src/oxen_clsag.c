@@ -58,7 +58,7 @@ int monero_apdu_clsag_prepare() {
     monero_io_discard(1);
 
     // a
-    monero_rng_mod_order(a);
+    monero_rng_mod_order(a, 32);
     monero_io_insert_encrypt(a, 32, TYPE_ALPHA);
     // a.G
     monero_ecmul_G(W, a);
@@ -111,7 +111,7 @@ int monero_apdu_clsag_hash() {
 
     if (G_oxen_state.io_p2 == 0) {
         oxen_hash_final(&G_oxen_state.keccak_alt, c);
-        monero_reduce(c);
+        monero_reduce(c, 32);
         monero_io_insert(c, 32);
         memmove(G_oxen_state.clsag_c, c, 32);
     }
@@ -165,12 +165,12 @@ int monero_apdu_clsag_sign() {
     monero_check_scalar_not_null(p);
     monero_check_scalar_not_null(z);
 
-    monero_reduce(a);
-    monero_reduce(p);
-    monero_reduce(z);
-    monero_reduce(mu_P);
-    monero_reduce(mu_C);
-    monero_reduce(G_oxen_state.clsag_c);
+    monero_reduce(a, 32);
+    monero_reduce(p, 32);
+    monero_reduce(z, 32);
+    monero_reduce(mu_P, 32);
+    monero_reduce(mu_C, 32);
+    monero_reduce(G_oxen_state.clsag_c, 32);
 
     // s0_p_mu_P = mu_P*p
     // s0_add_z_mu_C = mu_C*z + s0_p_mu_P
@@ -179,15 +179,15 @@ int monero_apdu_clsag_sign() {
     //   = a - c*(mu_C*z + mu_P*p)
 
     // s = p*mu_P
-    monero_multm(s, p, mu_P);
+    monero_multm(s, p, mu_P, 32);
     // mu_P = mu_C*z
-    monero_multm(mu_P, mu_C, z);
+    monero_multm(mu_P, mu_C, z, 32);
     // s = p*mu_P + mu_C*z
-    monero_addm(s, s, mu_P);
+    monero_addm(s, s, mu_P, sizeof(s));
     // mu_P = c * (p*mu_P + mu_C*z)
-    monero_multm(mu_P, G_oxen_state.clsag_c, s);
+    monero_multm(mu_P, G_oxen_state.clsag_c, s, 32);
     // s = a - c*(p*mu_P + mu_C*z)
-    monero_subm(s, a, mu_P);
+    monero_subm(s, a, mu_P, sizeof(s));
 
     monero_io_insert(s, 32);
 

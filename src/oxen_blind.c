@@ -45,10 +45,10 @@ int monero_apdu_blind() {
     } else {
         // blind mask
         monero_hash_to_scalar(AKout, AKout, 32);
-        monero_addm(k, k, AKout);
+        monero_addm(k, k, AKout, sizeof(k));
         // blind value
         monero_hash_to_scalar(AKout, AKout, 32);
-        monero_addm(v, v, AKout);
+        monero_addm(v, v, AKout, sizeof(v));
     }
     // ret all
     monero_io_insert(v, 32);
@@ -73,10 +73,10 @@ int monero_unblind(unsigned char *v,
     } else {
         // unblind mask
         monero_hash_to_scalar(AKout, AKout, 32);
-        monero_subm(k, k, AKout);
+        monero_subm(k, k, AKout, 32);
         // unblind value
         monero_hash_to_scalar(AKout, AKout, 32);
-        monero_subm(v, v, AKout);
+        monero_subm(v, v, AKout, 32);
     }
     return 0;
 }
