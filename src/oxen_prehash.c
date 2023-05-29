@@ -70,7 +70,7 @@ int monero_apdu_clsag_prehash_init(void) {
         }
         if (amount > 0) {
             // ask user
-            oxen_currency_str(amount, G_oxen_state.ux_amount);
+            oxen_currency_str(amount, G_oxen_state.ux_amount, sizeof(G_oxen_state.ux_amount));
             if (G_oxen_state.tx_type == TXTYPE_ONS)
                 ui_menu_lns_fee_validation_display();
             else
@@ -178,7 +178,7 @@ int monero_apdu_clsag_prehash_update(void) {
         uint64_t amount;
         amount = monero_bamount2uint64(v);
         if (amount) {
-            oxen_currency_str(amount, G_oxen_state.ux_amount);
+            oxen_currency_str(amount, G_oxen_state.ux_amount, sizeof(G_oxen_state.ux_amount));
             if (!is_change) {
                 if (G_oxen_state.tx_type == TXTYPE_STAKE || G_oxen_state.tx_type == TXTYPE_ONS) {
                     // If this is a stake or ONS tx then the non-change recipient must be ourself.

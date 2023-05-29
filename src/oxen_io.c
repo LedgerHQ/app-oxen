@@ -278,27 +278,34 @@ int monero_io_fetch_decrypt(unsigned char* buffer, int len, int type) {
     return len;
 }
 
-int monero_io_fetch_decrypt_key(unsigned char* buffer) {
+int monero_io_fetch_decrypt_key(unsigned char* buffer, int len) {
+    if (buffer == NULL) {
+        THROW(SW_WRONG_DATA);
+    }
+
+    if (len != 32) {
+        THROW(SW_WRONG_DATA);
+    }
     unsigned char* k;
-    monero_io_assert_available(32);
+    monero_io_assert_available(len);
 
     k = G_oxen_state.io_buffer + G_oxen_state.io_offset;
     // view?
-    if (memcmp(k, C_FAKE_SEC_VIEW_KEY, 32) == 0) {
-        G_oxen_state.io_offset += 32;
+    if (memcmp(k, C_FAKE_SEC_VIEW_KEY, len) == 0) {
+        G_oxen_state.io_offset += len;
         if (G_oxen_state.tx_in_progress) {
-            monero_io_assert_available(32);
+            monero_io_assert_available(len);
             monero_io_verify_hmac_for(C_FAKE_SEC_VIEW_KEY,
-                                      32,
+                                      len,
                                       G_oxen_state.io_buffer + G_oxen_state.io_offset,
                                       TYPE_SCALAR);
-            G_oxen_state.io_offset += 32;
+            G_oxen_state.io_offset += len;
         }
-        memmove(buffer, G_oxen_state.view_priv, 32);
-        return 32;
+        memmove(buffer, G_oxen_state.view_priv, len);
+        return len;
     }
     // spend?
-    else if (memcmp(k, C_FAKE_SEC_SPEND_KEY, 32) == 0) {
+    else if (memcmp(k, C_FAKE_SEC_SPEND_KEY, len) == 0) {
         switch (G_oxen_state.io_ins) {
             case INS_VERIFY_KEY:
             case INS_DERIVE_SECRET_KEY:
@@ -307,20 +314,20 @@ int monero_io_fetch_decrypt_key(unsigned char* buffer) {
             default:
                 THROW(SW_WRONG_DATA);
         }
-        G_oxen_state.io_offset += 32;
+        G_oxen_state.io_offset += len;
         if (G_oxen_state.tx_in_progress) {
-            monero_io_assert_available(32);
+            monero_io_assert_available(len);
             monero_io_verify_hmac_for(C_FAKE_SEC_SPEND_KEY,
-                                      32,
+                                      len,
                                       G_oxen_state.io_buffer + G_oxen_state.io_offset,
                                       TYPE_SCALAR);
         }
-        memmove(buffer, G_oxen_state.spend_priv, 32);
-        return 32;
+        memmove(buffer, G_oxen_state.spend_priv, len);
+        return len;
     }
     // else
     else {
-        return monero_io_fetch_decrypt(buffer, 32, TYPE_SCALAR);
+        return monero_io_fetch_decrypt(buffer, len, TYPE_SCALAR);
     }
 }
 

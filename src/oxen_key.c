@@ -262,7 +262,7 @@ int monero_apdu_verify_key(void) {
     unsigned char computed_pub[32];
     unsigned int verified = 0;
 
-    monero_io_fetch_decrypt_key(priv);
+    monero_io_fetch_decrypt_key(priv, sizeof(priv));
     monero_io_fetch(pub, 32);
     switch (G_oxen_state.io_p1) {
         case 0:
@@ -340,7 +340,7 @@ int monero_apdu_scal_mul_key(/*const rct::key &pub, const rct::key &sec, rct::ke
     unsigned char r[32];
     // fetch
     monero_io_fetch(pub, 32);
-    monero_io_fetch_decrypt_key(sec);
+    monero_io_fetch_decrypt_key(sec, sizeof(sec));
     monero_io_discard(0);
 
     monero_ecmul_k(r, pub, sec);
@@ -403,7 +403,7 @@ int monero_apdu_generate_key_derivation(/*const crypto::public_key &pub, const c
     unsigned char drv[32];
     // fetch
     monero_io_fetch(pub, 32);
-    monero_io_fetch_decrypt_key(sec);
+    monero_io_fetch_decrypt_key(sec, sizeof(sec));
 
     monero_io_discard(0);
 
@@ -471,7 +471,7 @@ int monero_apdu_derive_secret_key(/*const crypto::key_derivation &derivation, co
     // fetch
     monero_io_fetch_decrypt(derivation, 32, TYPE_DERIVATION);
     output_index = monero_io_fetch_u32();
-    monero_io_fetch_decrypt_key(sec);
+    monero_io_fetch_decrypt_key(sec, sizeof(sec));
     monero_io_discard(0);
 
     // pub
@@ -716,7 +716,7 @@ int monero_apdu_get_subaddress_secret_key(/*const crypto::secret_key& sec, const
     unsigned char index[8];
     unsigned char sub_sec[32];
 
-    monero_io_fetch_decrypt_key(sec);
+    monero_io_fetch_decrypt_key(sec, sizeof(sec));
     monero_io_fetch(index, 8);
     monero_io_discard(0);
 
@@ -754,7 +754,7 @@ int monero_apu_generate_txout_keys(/*size_t tx_version, crypto::secret_key tx_se
     if (tx_version != 4) {
         THROW(SW_WRONG_DATA);
     }
-    monero_io_fetch_decrypt_key(tx_key);
+    monero_io_fetch_decrypt_key(tx_key, sizeof(tx_key));
     txkey_pub = G_oxen_state.io_buffer + G_oxen_state.io_offset;
     monero_io_skip(32);
     Aout = G_oxen_state.io_buffer + G_oxen_state.io_offset;
@@ -766,7 +766,7 @@ int monero_apu_generate_txout_keys(/*size_t tx_version, crypto::secret_key tx_se
     is_subaddress = monero_io_fetch_u8();
     need_additional_txkeys = monero_io_fetch_u8();
     if (need_additional_txkeys) {
-        monero_io_fetch_decrypt_key(additional_txkey_sec);
+        monero_io_fetch_decrypt_key(additional_txkey_sec, sizeof(additional_txkey_sec));
     }
 
     // update outkeys hash control
@@ -827,7 +827,7 @@ int monero_apdu_encrypt_payment_id(void) {
     // fetch pub
     monero_io_fetch(pub, 32);
     // fetch sec
-    monero_io_fetch_decrypt_key(sec);
+    monero_io_fetch_decrypt_key(sec, sizeof(sec));
     // fetch paymentID
     monero_io_fetch(payID, 8);
 

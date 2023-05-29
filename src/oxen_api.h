@@ -120,7 +120,7 @@ uint64_t monero_bamount2uint64(unsigned char *binary);
 
 /** uint64 atomic currency amount to human-readable currency amount string. `str` must be at least
  * 22 chars long. */
-void oxen_currency_str(uint64_t atomic_oxen, char *str);
+void oxen_currency_str(uint64_t atomic_oxen, char *str, int str_len);
 
 int monero_abort_tx(void);
 int monero_unblind(unsigned char *v,
@@ -345,7 +345,7 @@ unsigned int monero_io_fetch_u8(void);
 int monero_io_fetch(unsigned char *buffer, int len);
 int monero_io_skip(int len);
 int monero_io_fetch_decrypt(unsigned char *buffer, int len, int type);
-int monero_io_fetch_decrypt_key(unsigned char *buffer);
+int monero_io_fetch_decrypt_key(unsigned char *buffer, int len);
 
 int monero_io_do(unsigned int io_flags);
 

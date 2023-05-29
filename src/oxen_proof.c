@@ -48,7 +48,7 @@ int monero_apdu_get_tx_proof(void) {
     monero_io_skip(32);
     D = G_oxen_state.io_buffer + G_oxen_state.io_offset;
     monero_io_skip(32);
-    monero_io_fetch_decrypt_key(r);
+    monero_io_fetch_decrypt_key(r, sizeof(r));
 
     monero_io_discard(0);
 
