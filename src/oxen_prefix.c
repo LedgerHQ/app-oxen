@@ -30,8 +30,15 @@
 /* ----------------------------------------------------------------------- */
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
-// str must be size >= 21
-static void monero_uint642str(uint64_t val, char *str) {
+static void monero_uint642str(uint64_t val, char *str, int str_len) {
+    if (str == NULL) {
+        THROW(SW_WRONG_DATA);
+    }
+
+    // str must be size >= 21
+    if (str_len < 21) {
+        THROW(SW_WRONG_DATA);
+    }
     unsigned char len, i, j;
     char tmp;
 
@@ -40,6 +47,8 @@ static void monero_uint642str(uint64_t val, char *str) {
     // Write it out in reverse, then swap it (because until we write it out we won't know the
     // length)
     do {
+        if (len + 1 >= str_len)
+            THROW(SW_SECURITY_INTERNAL);
         str[len++] = '0' + val % 10;
         val /= 10;
     } while (val);
@@ -59,7 +68,9 @@ static void monero_uint642str(uint64_t val, char *str) {
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
 int monero_apdu_prefix_hash_init(void) {
-    cx_keccak_init(&G_oxen_state.keccak_alt, 256);
+    cx_err_t err = cx_keccak_init_no_throw(&G_oxen_state.keccak_alt, 256);
+    if (err != CX_OK)
+        THROW(SW_WRONG_DATA);
     if (G_oxen_state.tx_sig_mode == TRANSACTION_CREATE_REAL) {
         if (monero_io_fetch_varint16() != 4)  // tx version; we only support v4 txes
             THROW(SW_WRONG_DATA_RANGE);
@@ -78,7 +89,7 @@ int monero_apdu_prefix_hash_init(void) {
         // At this stage we only want to check for a timelock and prompt if necessary (to prevent
         // accidental timelocked transactions).
         if (timelock != 0) {
-            monero_uint642str(timelock, G_oxen_state.ux_amount);
+            monero_uint642str(timelock, G_oxen_state.ux_amount, sizeof(G_oxen_state.ux_amount));
             ui_menu_timelock_validation_display();
             return 0;
         } else {

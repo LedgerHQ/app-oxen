@@ -206,8 +206,15 @@ unsigned char oxen_wallet_address(char* str_b58,
 /* ----------------------------------------------------------------------- */
 /* ---                                                                 --- */
 /* ----------------------------------------------------------------------- */
-// str must be length >= 22
-void oxen_currency_str(uint64_t atomic_oxen, char* str) {
+void oxen_currency_str(uint64_t atomic_oxen, char* str, int str_len) {
+    if (str == NULL) {
+        THROW(SW_WRONG_DATA);
+    }
+
+    // str must be length >= 22: max pow(2,64) uint, aka 20-chars + dot + null
+    if (str_len < 22) {
+        THROW(SW_WRONG_DATA);
+    }
     // max uint64 is 18446744073709551616, aka 20 char, plus dot
     unsigned char len, i, j;
     char tmp;
@@ -222,7 +229,9 @@ void oxen_currency_str(uint64_t atomic_oxen, char* str) {
     }
 
     // Write the value out in reverse; this is a bit easier since we don't know the length yet
-    for (len = 0; atomic_oxen; ++len) {
+    for (len = 0; atomic_oxen > 0; ++len) {
+        if (len >= str_len)
+            THROW(SW_SECURITY_INTERNAL);
         if (len == COIN_DECIMAL) str[len++] = '.';
         str[len] = '0' + atomic_oxen % 10;
         atomic_oxen /= 10;

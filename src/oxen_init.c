@@ -95,12 +95,12 @@ void monero_init_private_key(void) {
     switch (N_oxen_state->key_mode) {
         case KEY_MODE_SEED:
             oxen_keccak_256(&G_oxen_state.keccak, seed, 32, G_oxen_state.spend_priv);
-            monero_reduce(G_oxen_state.spend_priv);
+            monero_reduce(G_oxen_state.spend_priv, sizeof(G_oxen_state.spend_priv));
             oxen_keccak_256(&G_oxen_state.keccak,
                             G_oxen_state.spend_priv,
                             32,
                             G_oxen_state.view_priv);
-            monero_reduce(G_oxen_state.view_priv);
+            monero_reduce(G_oxen_state.view_priv, sizeof(G_oxen_state.spend_priv));
 
             break;
 
